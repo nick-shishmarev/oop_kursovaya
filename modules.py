@@ -5,9 +5,9 @@ class VKAPIClient:
     # Доступ к API VK
     API_BASE_URL = r'https://api.vk.com/method'
 
-    def __init__(self, token: str, user_id: str, version='5.191'):
+    def __init__(self, token: str, version='5.191'):
         self.token = token
-        self.user_id = user_id
+        self.user_id = None
         self.version = version
 
     def _common_params(self):
@@ -19,13 +19,25 @@ class VKAPIClient:
 
     def method_url(self, api_method: str, params: dict):
         # вызов методов API VK с передачей нужных параметров
-        pars = (self._common_params())
+        pars = self._common_params()
         pars.update(params)
         response = requests.get(
             f'{self.API_BASE_URL}/{api_method}',
             params=pars
         )
         return response.json()
+
+    def get_user(self, user, fields):
+        pars = self._common_params()
+        pars.update({'user_ids': user, 'fields': fields})
+        response = self.method_url('users.get', pars)
+
+        if response.get('response'):
+            self.user_id = response['response'][0]['id']
+        else:
+            raise ValueError(f"User authorization failed: access_token is not valid")
+
+        return response['response'][0]
 
 
 class YaDisk:
@@ -78,3 +90,48 @@ class YaDisk:
         response = requests.put(upload_url, files={'file': content})
 
         return response.status_code, f_name
+
+
+class VKUser:
+    # Информация о пользователе VK
+    API_BASE_URL = r'https://api.vk.com/method'
+
+    def __init__(self):
+        self.id = None
+        self.first_name = None
+        self.last_name = None
+        self.user_city = None
+        self.user_birthday = None
+        self.albums = []
+
+    def get_user(self, client, user_id):
+        self.id = None
+        self.first_name = None
+        self.last_name = None
+        self.user_city = None
+        self.user_birthday = None
+        self.albums = []
+
+        fields = 'bdate, city'
+
+        user = client.get_user(user_id, fields)
+
+        if not user:
+            return None
+
+        self.id = user['id']
+        self.first_name = user['first_name']
+        self.last_name = user['last_name']
+        self.user_city = user.get('city')['title']
+        self.user_birthday = user.get('bdate')
+
+    def get_albums(self, client):
+        parameters = {
+            'owner_id': self.id,
+        }
+
+        albums = client.method_url('photos.getAlbums', parameters)
+        if list(albums.keys())[0] == 'response':
+            self.albums = albums.get('response').get('items')
+            return True
+        return False
