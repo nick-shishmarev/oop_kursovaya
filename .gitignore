@@ -1,7 +1,7 @@
 temp/
 mine/
 .idea/
-venv/
+venv*/
 *.log
 *.tmp
 *.ini

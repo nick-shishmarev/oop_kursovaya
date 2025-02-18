@@ -128,7 +128,6 @@ def get_photos_from_album(client, user):
         a_id = albums[album_number - 1][0]
         a_name = albums[album_number - 1][1]
 
-
         pic_lst = get_photos(client, user, a_id)
         if len(pic_lst) == 0:
             logging.info(f"Альбом {a_name} пустой")
@@ -191,7 +190,7 @@ def put_to_yandex(client: YaDisk, lst: list, default: str, file_json: list):
 
 def main():
     config = configparser.ConfigParser()
-    config.read('settings.ini')
+    config.read('settings1.ini')
     vk_token = config['tokens']['vk_token']
     ya_key = config['tokens']['ya_token']
     default_folder = config['folders']['target']
